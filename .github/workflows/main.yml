@@ -1,0 +1,19 @@
+name: Check runner cores
+
+on:
+  workflow_dispatch:
+
+jobs:
+  inspect-runner:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show basic info
+        run: |
+          echo "Runner: $RUNNER_OS  - Label(s): $RUNNER_LABELS"
+          echo "Date: $(date -u)"
+      - name: Count logical CPUs (nproc)
+        run: nproc
+      - name: Detailed CPU info (lscpu)
+        run: lscpu || cat /proc/cpuinfo | sed -n '1,20p'
+      - name: Print available memory
+        run: free -h
